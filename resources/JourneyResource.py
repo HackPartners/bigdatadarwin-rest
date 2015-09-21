@@ -1,9 +1,6 @@
 from flask_restful import Resource, reqparse, marshal_with, fields
 
-from common.darwinutil import get_service_details
-from common.util import api_bool
-
-from nredarwin.webservice import DarwinLdbSession, WebServiceError
+from common.util import api_bool, validate_tiploc
 
 from bigdatadarwin.models import Schedule, CallingPoint
 
@@ -22,8 +19,9 @@ query_parser.add_argument(
 
 query_parser.add_argument(
     'station', dest='station',
-    type=api_bool, help='Either the TIPLOC or CRS code for the station.',
+    type=str, help='Either the TIPLOC or CRS code for the station.',
 )
+
 
 class JourneyResource(Resource):
 
@@ -32,46 +30,18 @@ class JourneyResource(Resource):
         args = query_parser.parse_args()
 
         service = args.service
-        station = args.station
+        station = validate_tiploc(args.station)
+        print "params:", service, station
 
         try:
-            # In this query, we query for the "unique" number 
-            # of schedules that contain a cancellation.
-            cancelled = Schedule.select(
-                    Schedule,
-                    CallingPoint
-                ).join(
-                    CallingPoint
-                ).where(
-                    CallingPoint.tiploc=="ELPHNAC", 
-                    CallingPoint.cancelled==True
-                ).distinct(
-                    [CallingPoint.working_departure,
-                    CallingPoint.working_arrival]
-                ).count()
-
-            fulfilled = Schedule.select(
-                    Schedule,
-                    CallingPoint
-                ).join(
-                    CallingPoint
-                ).where(
-                    CallingPoint.tiploc=="ELPHNAC", 
-                    CallingPoint.cancelled==False
-                ).distinct(
-                    [CallingPoint.working_departure,
-                    CallingPoint.working_arrival]
-                ).count()
+            cancelled = self._get_cancellations(True, station)
+            fulfilled = self._get_cancellations(False, station)
 
             response = {
                 "cancelled": cancelled,
                 "fulfilled": fulfilled
             }
             
-        except WebServiceError as e:
-            response = {
-                "error": "Darwin web service error - probably service id does not exist."
-            }
         except Exception as e:
             response = {
                 "error": str(e)
@@ -79,5 +49,34 @@ class JourneyResource(Resource):
 
         return response
 
+    def _get_cancellations(self, cancelled=False, tiploc=None, service=None):
 
-        
+        if not tiploc and not service:
+            raise Exception("Either service and/or service must be provided.")
+
+        query_params = []
+        query_params.append(CallingPoint.cancelled==cancelled)
+
+        if tiploc: query_params.append(CallingPoint.tiploc==tiploc)
+        if service: query_params.append(Schedule.uid==service)
+
+        # In this query, we query for the "unique" number 
+        # of schedules that contain a cancellation.
+        print tiploc
+        schedules_found = Schedule.select(
+                        Schedule,
+                        CallingPoint
+                    ).join(
+                        CallingPoint
+                    ).where(
+                        CallingPoint.tiploc==tiploc
+                    ).distinct(
+                        [CallingPoint.working_departure,
+                        CallingPoint.working_arrival]
+                    )
+        print schedules_found
+        print schedules_found.count()
+
+        return schedules_found.count()
+
+

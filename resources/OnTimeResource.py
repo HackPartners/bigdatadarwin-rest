@@ -1,9 +1,6 @@
 from flask_restful import Resource, reqparse, marshal_with, fields
 
-from common.darwinutil import get_service_details
 from common.util import api_bool
-
-from nredarwin.webservice import DarwinLdbSession, WebServiceError
 
 from bigdatadarwin.models import Schedule, CallingPoint
 
@@ -26,7 +23,7 @@ query_parser.add_argument(
     type=api_bool, help='Either the TIPLOC or CRS code for the station.',
 )
 
-class JourneyResource(Resource):
+class OnTimeResource(Resource):
 
     def get(self):
 

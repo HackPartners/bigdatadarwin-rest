@@ -1,6 +1,6 @@
 #Adding to pythonpath
-import sys
-sys.path.append(os.path.join(os.path.dirname(__file__), "../bigdatadarwin"))
+import sys, os
+sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 
 from flask import Flask
 from flask_restful import Api
