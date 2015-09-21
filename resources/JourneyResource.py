@@ -54,11 +54,10 @@ class JourneyResource(Resource):
         if not tiploc and not service:
             raise Exception("Either service and/or service must be provided.")
 
-        query_params = []
-        query_params.append(CallingPoint.cancelled==cancelled)
+        query_params = CallingPoint.cancelled==cancelled
 
-        if tiploc: query_params.append(CallingPoint.tiploc==tiploc)
-        if service: query_params.append(Schedule.uid==service)
+        if tiploc: query_params = query_params & (CallingPoint.tiploc==tiploc)
+        if service: query_params = query_params & (Schedule.uid==service)
 
         # In this query, we query for the "unique" number
         # of schedules that contain a cancellation.
@@ -69,10 +68,10 @@ class JourneyResource(Resource):
                     ).join(
                         CallingPoint
                     ).where(
-                        CallingPoint.tiploc==tiploc
+                        query_params
                     ).distinct(
-                        [CallingPoint.working_departure,
-                        CallingPoint.working_arrival]
+                        [Schedule.uid,
+                        Schedule.rid]
                     )
         print(schedules_found)
         print(schedules_found.count())
