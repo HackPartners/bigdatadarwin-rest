@@ -34,8 +34,8 @@ class JourneyResource(Resource):
         print("params:", service, station)
 
         try:
-            cancelled = self._get_cancellations(True, station)
-            fulfilled = self._get_cancellations(False, station)
+            cancelled = self._get_cancellations(True, station, service)
+            fulfilled = self._get_cancellations(False, station, service)
 
             response = {
                 "cancelled": cancelled,
