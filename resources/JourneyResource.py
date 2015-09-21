@@ -31,7 +31,7 @@ class JourneyResource(Resource):
 
         service = args.service
         station = validate_tiploc(args.station)
-        print "params:", service, station
+        print("params:", service, station)
 
         try:
             cancelled = self._get_cancellations(True, station)
@@ -41,7 +41,7 @@ class JourneyResource(Resource):
                 "cancelled": cancelled,
                 "fulfilled": fulfilled
             }
-            
+
         except Exception as e:
             response = {
                 "error": str(e)
@@ -60,9 +60,9 @@ class JourneyResource(Resource):
         if tiploc: query_params.append(CallingPoint.tiploc==tiploc)
         if service: query_params.append(Schedule.uid==service)
 
-        # In this query, we query for the "unique" number 
+        # In this query, we query for the "unique" number
         # of schedules that contain a cancellation.
-        print tiploc
+        print(tiploc)
         schedules_found = Schedule.select(
                         Schedule,
                         CallingPoint
@@ -74,9 +74,7 @@ class JourneyResource(Resource):
                         [CallingPoint.working_departure,
                         CallingPoint.working_arrival]
                     )
-        print schedules_found
-        print schedules_found.count()
+        print(schedules_found)
+        print(schedules_found.count())
 
         return schedules_found.count()
-
-
