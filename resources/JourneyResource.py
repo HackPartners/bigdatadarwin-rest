@@ -70,6 +70,10 @@ class JourneyResource(Resource):
                     ).distinct(
                         [Schedule.uid,
                         Schedule.rid]
+                    ).order_by(
+                        [Schedule.uid.desc(),
+                        Schedule.rid.desc(),
+                        Schedule.id.desc()]
                     )
 
         return schedules_found.count()
