@@ -5,6 +5,9 @@ from common import util
 from bigdatadarwin.models import Schedule, CallingPoint
 
 import datetime
+import logging
+
+log = logging.getLogger("cancellations")
 
 query_parser = reqparse.RequestParser()
 
@@ -66,6 +69,7 @@ class Cancellations(Resource):
             }
 
         except Exception as e:
+            log.warning(e)
             return {
                 "err": "Something went wrong, please try again.",
             }
