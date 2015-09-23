@@ -1,6 +1,6 @@
 from flask_restful import Resource, reqparse, marshal_with, fields
 
-from common.util import api_bool, validate_tiploc
+from common import util
 
 from bigdatadarwin.models import Schedule, CallingPoint
 
@@ -20,17 +20,12 @@ query_parser.add_argument(
 )
 
 query_parser.add_argument(
-    'uid', dest='uid',
-    type=str, help='The TSDB ID (uid) of the service',
+    'service', dest='service',
+    type=str, help='The train RID or UID.',
 )
 
 query_parser.add_argument(
-    'rid', dest='rid',
-    type=str, help='The RID of the service.',
-)
-
-query_parser.add_argument(
-    'tiploc', dest='tiploc',
+    'station', dest='station',
     type=str, help='Either the TIPLOC or CRS code for the station.',
 )
 
@@ -47,11 +42,19 @@ class Cancellations(Resource):
                 args.day = args.day.date()
             except ValueError:
                 return {
-                    "Error": "Day must be of format yyyy-mm-dd.",
+                    "err": "Day must be of format yyyy-mm-dd.",
                 }
 
-        if args.tiploc:
-            args.tiploc = validate_tiploc(args.tiploc)
+        if args.station:
+            args.station = util.validate_tiploc(args.station)
+
+        if args.service:
+            args.stype = util.service(args.service)
+            if args.stype == util.TRAINID:
+                return {
+                    "err": "Only rid and uid supported at the moment,"\
+                        " trainId was given.",
+                }
 
         try:
             count_cancelled = self._get_cancellations(True, args)
@@ -74,14 +77,14 @@ class Cancellations(Resource):
         if args.day:
             query_params = query_params & (Schedule.start_date==args.day)
 
-        if args.tiploc:
-            query_params = query_params & (CallingPoint.tiploc==args.tiploc)
+        if args.station:
+            query_params = query_params & (CallingPoint.tiploc==args.station)
 
-        if args.uid:
-            query_params = query_params & (CallingPoint.uid==args.uid)
-
-        if args.rid:
-            query_params = query_params & (CallingPoint.rid==args.rid)
+        if args.service:
+            if args.stype == util.UID:
+                query_params = query_params & (Schedule.uid==args.service)
+            else:
+                query_params = query_params & (Schedule.rid==args.service)
 
         res =  CallingPoint.select(
             CallingPoint.id
