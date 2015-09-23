@@ -89,13 +89,6 @@ class Cancellations(Resource):
             Schedule
         ).where(
             query_params
-        ).distinct(
-            [Schedule.uid,
-            Schedule.rid]
-        ).order_by(
-            [Schedule.uid.desc(),
-            Schedule.rid.desc(),
-            Schedule.id.desc()]
         )
 
         return res.count()
