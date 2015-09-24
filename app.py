@@ -7,7 +7,7 @@ from flask_restful import Api
 from resources.JourneyResource import JourneyResource
 from resources.OnTimeResource import OnTimeResource
 from resources.Cancellations import Cancellations
-
+from resources.Service import Service
 
 app = Flask(__name__)
 api = Api(app)
@@ -25,5 +25,8 @@ api.add_resource(JourneyResource, '/hist/1.0/journey')
 api.add_resource(OnTimeResource, '/hist/1.0/ontime')
 
 api.add_resource(Cancellations, "/hist/1.0/cancellations")
+
+api.add_resource(Service, "/service/<string:service>")
+
 if __name__ == '__main__':
     app.run(host='127.0.0.1', port=3001, debug=True)
