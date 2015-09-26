@@ -74,6 +74,7 @@ class JourneyResource(Resource):
                 "error": str(e)
             }
 
+
         return response
 
     def _get_journeys(self, granularity, station, service, from_date, to_date):
