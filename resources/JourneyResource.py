@@ -29,13 +29,8 @@ query_parser.add_argument(
 
 query_parser.add_argument(
     'granularity', dest='granularity',
-    type=str, help='Either the TIPLOC or CRS code for the station.',
-)
-
-query_parser.add_argument(
-    'granularity', dest='granularity',
     default=DEFAULT_GRANULARITY,
-    type=str, help='Either the TIPLOC or CRS code for the station.',
+    type=str, help='Granularity desired. Can be day, week or month.',
 )
 
 
