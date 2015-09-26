@@ -138,13 +138,8 @@ class JourneyResource(Resource):
                 ("WHERE tiploc='%s'" % station) if station else "",
                 grouping ))
 
-        print ( granularity,
-                from_date, 
-                to_date, 
-                granularity,
-                ("WHERE uid='%s'" % service) if service else "",
-                ("WHERE tiploc='%s'" % station) if station else "",
-                grouping )
+        print query
+        
         cursor = db.execute_sql(query)
         # TODO: Make a proper class for this.
         result = [
