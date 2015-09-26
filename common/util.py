@@ -18,7 +18,10 @@ def api_bool(value):
     else:
         return False
 
-def validate_service(s):
+def validate_service(service):
+    return service
+
+def service_type(s):
     """Returns whether a service is a UID, a RID or a trainId"""
     s = s.strip()
     if pattern_rid.match(s):

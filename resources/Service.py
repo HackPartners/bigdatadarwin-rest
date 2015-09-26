@@ -61,7 +61,7 @@ class Service(Resource):
         return res
 
     def get_where(self, service):
-        stype = util.service(service)
+        stype = util.service_type(service)
 
         if stype == util.UID:
             return Schedule.uid == service

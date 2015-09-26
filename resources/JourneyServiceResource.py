@@ -18,11 +18,6 @@ query_parser.add_argument(
 )
 
 query_parser.add_argument(
-    'service', dest='service',
-    type=str, help='The TSDB ID (uid) of the service',
-)
-
-query_parser.add_argument(
     'station', dest='station',
     type=str, help='Either the TIPLOC or CRS code for the station.',
 )
@@ -34,16 +29,15 @@ query_parser.add_argument(
 )
 
 
-class JourneyResource(Resource):
+class JourneyServiceResource(Resource):
 
-    def get(self):
+    def get(self, service):
 
         args = query_parser.parse_args()
 
-        service = validate_service(args.service) if args.service else None
+        service = validate_service(service)
         granularity = validated_granularity(args.granularity)
         station = validate_tiploc(args.station)
-        print granularity
 
         date_to = datetime.datetime.now().date()
         date_from = date_to - datetime.timedelta(days=DEFAULT_DAY_WINDOW)
@@ -61,7 +55,8 @@ class JourneyResource(Resource):
                 "station": station,
                 "journeys": journeys,
                 "from": str(date_from),
-                "to": str(date_to)
+                "to": str(date_to),
+                "granularity": granularity
             }
 
         except Exception as e:
@@ -95,7 +90,7 @@ class JourneyResource(Resource):
                 from GENERATE_SERIES('%s', '%s', 
                    '1 %s'::interval) n
                    )
-            SELECT s.total, s.cancelled, s.fulfilled
+            SELECT t.start_time, t.end_time, s.total, s.cancelled, s.fulfilled
             FROM (
                 SELECT
                     s.start_date as start_date, s.uid as uid,
@@ -111,22 +106,24 @@ class JourneyResource(Resource):
                 GROUP BY s.start_date, s.uid
                 ORDER BY cancelled DESC
             ) s 
-            JOIN t ON 
+            RIGHT OUTER JOIN t ON 
             t.start_time <= s.start_date AND t.end_time > s.start_date
         """ % ( granularity,
                 from_date, 
                 to_date, 
                 granularity,
-                ("WHERE uid=%s" % service) if service else "",
+                ("WHERE uid='%s'" % service) if service else "",
                 ("WHERE tiploc='%s'" % station) if station else ""))
 
         cursor = db.execute_sql(query)
         # TODO: Make a proper class for this.
         result = [
             { 
-                "total": int(l[0]),
-                "cancelled": int(l[1]),
-                "fulfilled": int(l[2])
+                "from": str(l[0]),
+                "to": str(l[1]),
+                "total": int(l[2]) if l[2] else 0,
+                "cancelled": int(l[3]) if l[3] else 0,
+                "fulfilled": int(l[4]) if l[4] else 0
             } 
             for l in cursor.fetchall()]
 
