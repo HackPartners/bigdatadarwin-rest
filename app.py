@@ -4,7 +4,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 
 from flask import Flask
 from flask_restful import Api
-from resources.JourneyServiceResource import JourneyServiceResource
+from resources.JourneyResource import JourneyResource
 from resources.OnTimeResource import OnTimeResource
 from resources.Cancellations import Cancellations
 from resources.Service import Service
@@ -20,7 +20,9 @@ def after_request(response):
   response.headers.add('Access-Control-Allow-Methods', 'GET')
   return response
 
-api.add_resource(JourneyServiceResource, '/hist/1.0/journey/service/<string:service>')
+api.add_resource(JourneyResource, 
+                '/hist/1.0/journey/service/<string:service>',
+                '/hist/1.0/journey/station/<string:station>')
 
 api.add_resource(Service, "/hist/1.0/service/<string:service>")
 
