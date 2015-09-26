@@ -1,8 +1,13 @@
 from flask_restful import Resource, reqparse, marshal_with, fields
 
-from common.util import api_bool, validate_tiploc
+from common.util import api_bool, validate_tiploc, validated_granularity, validate_service
 
-from bigdatadarwin.models import Schedule, CallingPoint
+from bigdatadarwin.models import db
+
+import datetime
+
+DEFAULT_GRANULARITY="day"
+DEFAULT_DAY_WINDOW=7
 
 query_parser = reqparse.RequestParser()
 
@@ -22,6 +27,17 @@ query_parser.add_argument(
     type=str, help='Either the TIPLOC or CRS code for the station.',
 )
 
+query_parser.add_argument(
+    'granularity', dest='granularity',
+    type=str, help='Either the TIPLOC or CRS code for the station.',
+)
+
+query_parser.add_argument(
+    'granularity', dest='granularity',
+    default=DEFAULT_GRANULARITY,
+    type=str, help='Either the TIPLOC or CRS code for the station.',
+)
+
 
 class JourneyResource(Resource):
 
@@ -29,16 +45,28 @@ class JourneyResource(Resource):
 
         args = query_parser.parse_args()
 
-        service = args.service
+        service = validate_service(args.service) if args.service else None
+        granularity = validated_granularity(args.granularity)
         station = validate_tiploc(args.station)
+        print granularity
+
+        date_to = datetime.datetime.now().date()
+        date_from = date_to - datetime.timedelta(days=DEFAULT_DAY_WINDOW)
 
         try:
-            cancelled = self._get_cancellations(True, station, service)
-            fulfilled = self._get_cancellations(False, station, service)
+            journeys = self._get_journeys(
+                    granularity, 
+                    station, 
+                    service, 
+                    date_from,
+                    date_to)
 
             response = {
-                "cancelled": cancelled,
-                "fulfilled": fulfilled
+                "service": service,
+                "station": station,
+                "journeys": journeys,
+                "from": str(date_from),
+                "to": str(date_to)
             }
 
         except Exception as e:
@@ -48,32 +76,64 @@ class JourneyResource(Resource):
 
         return response
 
-    def _get_cancellations(self, cancelled=False, tiploc=None, service=None):
+    def _get_journeys(self, granularity, station, service, from_date, to_date):
+        """Function that queries the database for number of cancelled and fulfilled journeys.
 
-        if not tiploc and not service:
-            raise Exception("Either service and/or tiploc must be provided.")
+        Args:
+            granularity (string): The type of granularity desired. It can be day, month, week.
+            station (string): The tiploc or crs station code.
+            service (string): The uid service id.
+            from_date (Date): The date to use as FROM.
+            to_date (Date): The date to use as TO.
 
-        query_params = CallingPoint.cancelled==cancelled
+        Returns:
+            JourneyResponse: A JourneyResponse object containing an array of cancelled/fulfilled journeys.
+        """
+        
+        query = ("""
+            WITH t AS (
+                -- generate start_time and end_time interval of 1 day 
+                SELECT
+                n AS start_time, 
+                n + interval '1' %s AS end_time
+                from GENERATE_SERIES('%s', '%s', 
+                   '1 %s'::interval) n
+                   )
+            SELECT s.total, s.cancelled, s.fulfilled
+            FROM (
+                SELECT
+                    s.start_date as start_date, s.uid as uid,
+                    COUNT(c.id) as total,
+                    COUNT(CASE WHEN c.cancelled THEN 1 ELSE null END) as cancelled,
+                    COUNT(CASE WHEN c.cancelled THEN null ELSE 1 END) as fulfilled
+                FROM callingpoint c
+                JOIN (
+                    SELECT * FROM schedule
+                    %s
+                ) s ON s.id = c.schedule_id
+                %s
+                GROUP BY s.start_date, s.uid
+                ORDER BY cancelled DESC
+            ) s 
+            JOIN t ON 
+            t.start_time <= s.start_date AND t.end_time > s.start_date
+        """ % ( granularity,
+                from_date, 
+                to_date, 
+                granularity,
+                ("WHERE uid=%s" % service) if service else "",
+                ("WHERE tiploc='%s'" % station) if station else ""))
 
-        if tiploc: query_params = query_params & (CallingPoint.tiploc==tiploc)
-        if service: query_params = query_params & (Schedule.uid==service)
+        cursor = db.execute_sql(query)
+        # TODO: Make a proper class for this.
+        result = [
+            { 
+                "total": int(l[0]),
+                "cancelled": int(l[1]),
+                "fulfilled": int(l[2])
+            } 
+            for l in cursor.fetchall()]
 
-        # In this query, we query for the "unique" number
-        # of schedules that contain a cancellation.
-        schedules_found = Schedule.select(
-                        Schedule,
-                        CallingPoint
-                    ).join(
-                        CallingPoint
-                    ).where(
-                        query_params
-                    ).distinct(
-                        [Schedule.uid,
-                        Schedule.rid]
-                    ).order_by(
-                        [Schedule.uid.desc(),
-                        Schedule.rid.desc(),
-                        Schedule.id.desc()]
-                    )
 
-        return schedules_found.count()
+        return result
+
