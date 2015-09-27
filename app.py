@@ -20,13 +20,11 @@ def after_request(response):
   response.headers.add('Access-Control-Allow-Methods', 'GET')
   return response
 
-api.add_resource(JourneyResource, '/hist/1.0/journey')
+api.add_resource(JourneyResource, 
+                '/hist/1.0/journey/service/<string:service>',
+                '/hist/1.0/journey/station/<string:station>')
 
-api.add_resource(OnTimeResource, '/hist/1.0/ontime')
-
-api.add_resource(Cancellations, "/hist/1.0/cancellations")
-
-api.add_resource(Service, "/service/<string:service>")
+api.add_resource(Service, "/hist/1.0/service/<string:service>")
 
 if __name__ == '__main__':
     app.run(host='127.0.0.1', port=3001, debug=True)

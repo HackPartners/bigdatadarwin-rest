@@ -1,5 +1,14 @@
 import re
 
+UID = 1
+RID = 2
+TRAINID = 3
+
+pattern_rid = re.compile("^[0-9]+$")
+pattern_trainid = re.compile("^[0-9][A-Za-z][0-9][0-9]$")
+
+DEFAULT_GRANULARITY="day"
+
 def validate_tiploc(code):
     return code
 
@@ -9,14 +18,10 @@ def api_bool(value):
     else:
         return False
 
-UID = 1
-RID = 2
-TRAINID = 3
+def validate_service(service):
+    return service
 
-pattern_rid = re.compile("^[0-9]+$")
-pattern_trainid = re.compile("^[0-9][A-Za-z][0-9][0-9]$")
-
-def service(s):
+def service_type(s):
     """Returns whether a service is a UID, a RID or a trainId"""
     s = s.strip()
     if pattern_rid.match(s):
@@ -24,3 +29,16 @@ def service(s):
     if pattern_trainid.match(s):
         return TRAINID
     return UID
+
+def validated_granularity(value):
+    GRANUlARITIES = [
+        "day",
+        "week",
+        "month"
+    ]
+    
+    value = value.lower()
+    if not value in GRANUlARITIES:
+        raise Exception("Granularity is not valid. Given: " + str(value))
+
+    return value
