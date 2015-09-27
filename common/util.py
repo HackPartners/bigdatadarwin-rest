@@ -37,7 +37,7 @@ def validated_granularity(value):
         "month"
     ]
     
-    value = value.toLower()
+    value = value.lower()
     if not value in GRANUlARITIES:
         raise Exception("Granularity is not valid. Given: " + str(value))
 
