@@ -15,7 +15,7 @@ from resources.StationJourneyResource import StationJourneyResource
 app = Flask(__name__)
 api = Api(app)
 
-DEBUG = os.getenv("BIGDATADARWIN_DEBUG", False)
+BDD_ENV = os.getenv("BIGDATADARWIN_ENV", "DEV")
 
 @app.after_request
 def after_request(response):
@@ -50,8 +50,8 @@ api.add_resource(ServiceJourneyResource,
 
 if __name__ == '__main__':
 
-    if DEBUG:
+    if BDD_ENV == "DEV":
         app.run(host='127.0.0.1', port=3001, debug=True)
-    else:
+    elif BDD_ENV == "PROD":
         app.run(host='0.0.0.0', port=80, debug=False)
 
