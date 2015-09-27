@@ -26,9 +26,13 @@ class ServiceResource(Resource):
 
         s = Schedule.get(Schedule.rid == service)
 
-        schedule = model_to_dict(s, recurse=True, backrefs=True)
+        schedule = model_to_dict(
+                        s, 
+                        recurse=True, 
+                        backrefs=True,
+                        exclude=["type"])
 
         # Reverse the list of calling points
-        schedule["callingpoint_set"] = schedule["callingpoint_set"][::-1]
+        schedule["callingpoint_set"].reverse()
 
         return json.loads(json.dumps(schedule, default=date_handler))

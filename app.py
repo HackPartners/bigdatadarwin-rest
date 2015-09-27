@@ -6,6 +6,8 @@ from flask import Flask
 from flask_restful import Api
 from resources.JourneyResource import JourneyResource
 from resources.ServiceResource import ServiceResource
+from resources.ServiceJourneyResource import ServiceJourneyResource
+from resources.StationJourneyResource import StationJourneyResource
 
 app = Flask(__name__)
 api = Api(app)
@@ -22,7 +24,24 @@ api.add_resource(JourneyResource,
                 '/hist/1.0/journey/service/<string:service>',
                 '/hist/1.0/journey/station/<string:station>')
 
-api.add_resource(ServiceResource, "/hist/1.0/service/<string:service>")
+
+###################################################
+##################### Station #####################
+###################################################
+
+api.add_resource(StationJourneyResource, 
+                "/hist/1.0/station/<string:station>/journey")
+
+
+###################################################
+##################### Service #####################
+###################################################
+
+api.add_resource(ServiceResource, 
+                "/hist/1.0/service/<string:service>")
+
+api.add_resource(ServiceJourneyResource, 
+                '/hist/1.0/service/<string:service>/journey')
 
 if __name__ == '__main__':
     app.run(host='127.0.0.1', port=3001, debug=True)
