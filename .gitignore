@@ -3,3 +3,4 @@ nredarwin
 *.pyc
 .DS_Store
 bigdatadarwin
+venv
