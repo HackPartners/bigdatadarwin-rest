@@ -1,3 +1,6 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*- 
+
 #Adding to pythonpath
 import sys, os
 sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
@@ -47,7 +50,7 @@ api.add_resource(ServiceJourneyResource,
 
 if __name__ == '__main__':
 
-    if BIGDATADARWIN_DEBUG:
+    if DEBUG:
         app.run(host='127.0.0.1', port=3001, debug=True)
     else:
         app.run(host='0.0.0.0', port=80, debug=False)
