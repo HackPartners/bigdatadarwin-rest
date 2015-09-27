@@ -50,7 +50,7 @@ class JourneyResource(Resource):
         args = query_parser.parse_args()
 
         granularity = validated_granularity(args.granularity)
-        service = validate_service(args.service) if (not service and args.service) else service
+        service = validate_service(args.service) if (not service and args.service) else validate_service(service)
         station = validate_tiploc(args.station) if (not station and args.station) else station
 
         date_to = datetime.datetime.now().date()
