@@ -12,6 +12,8 @@ from resources.StationJourneyResource import StationJourneyResource
 app = Flask(__name__)
 api = Api(app)
 
+DEBUG = os.getenv("BIGDATADARWIN_DEBUG", False)
+
 @app.after_request
 def after_request(response):
   # This function enables CORS in all requests
@@ -44,4 +46,9 @@ api.add_resource(ServiceJourneyResource,
                 '/hist/1.0/service/<string:service>/journey')
 
 if __name__ == '__main__':
-    app.run(host='127.0.0.1', port=3001, debug=True)
+
+    if BIGDATADARWIN_DEBUG:
+        app.run(host='127.0.0.1', port=3001, debug=True)
+    else:
+        app.run(host='0.0.0.0', port=80, debug=False)
+
